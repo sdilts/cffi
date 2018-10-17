@@ -43,13 +43,13 @@
         (write `(ctype ,base-type-name ,base-type))
         (write `(,enum-type (,enum-name :base-type ,base-type-name)
                             ((:value ,constant-name)))))
-      ;; Get the value of :inaddr-broadcast
+      ;; Get value for `enum-name'
       (let ((lisp-file (cffi-grovel:process-grovel-file grovel-file)))
         (unwind-protect
              (progn
                (load lisp-file)
                (cffi:foreign-enum-value enum-name :value))
-          (uiop/filesystem:delete-file-if-exists lisp-file))))))
+          (uiop:delete-file-if-exists lisp-file))))))
 
 (deftest bug-1395242
     (labels
@@ -72,3 +72,32 @@
                ("uint32_t" ("UINT32_MAX" 4294967295) ("INT8_MIN" 4294967168))
                ("int32_t" ("INT32_MIN" -2147483648) ("INT32_MAX" 2147483647)))))
   t)
+
+(defvar *grovelled-features*)
+
+(deftest grovel-feature
+    (uiop:with-temporary-file (:stream grovel-stream :pathname grovel-file)
+      ;; Write the grovel file
+      (with-standard-io-syntax
+        (with-open-stream (*standard-output* grovel-stream)
+          (let ((*package* (find-package :keyword)))
+            (write `(in-package :cffi-tests))
+            (write `(include "limits.h"))
+            (write `(feature grovel-test-feature "CHAR_BIT"))
+            (write `(feature :char-bit "CHAR_BIT"
+                             :feature-list *grovelled-features*))
+            (write `(feature :inexistent-grovel-feature
+                             "INEXISTENT_CFFI_GROVEL_FEATURE"
+                             :feature-list *grovelled-features*)))))
+      (let ((lisp-file (cffi-grovel:process-grovel-file grovel-file))
+            (*grovelled-features* nil))
+        (unwind-protect
+             (progn
+               (load lisp-file)
+               (unwind-protect
+                    (values (and (member 'grovel-test-feature *features*) t)
+                            (and (member :char-bit *grovelled-features*) t)
+                            (member :inexistent-grovel-feature *grovelled-features*))
+                 (alexandria:removef *features* 'grovel-test-feature)))
+          (uiop:delete-file-if-exists lisp-file))))
+  t t nil)
