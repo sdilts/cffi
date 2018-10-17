@@ -271,10 +271,10 @@ int main(int argc, char**argv) {
   (c-format out "(cffi:defctype ~S ~S)~%" new-type base-type))
 
 (define-grovel-syntax flag (&rest flags)
-  (appendf *cc-flags* (parse-command-flags-list flags)))
+  (unionf *cc-flags* (parse-command-flags-list flags) :test #'string=))
 
 (define-grovel-syntax cc-flags (&rest flags)
-  (appendf *cc-flags* (parse-command-flags-list flags)))
+  (unionf *cc-flags* (union *cc-flags* (parse-command-flags-list flags) :test #'string=)))
 
 (define-grovel-syntax pkg-config-cflags (pkg &key optional)
   (let ((output-stream (make-string-output-stream))
@@ -285,8 +285,8 @@ int main(int argc, char**argv) {
           (run-program program+args
                        :output (make-broadcast-stream output-stream *debug-io*)
                        :error-output output-stream)
-          (appendf *cc-flags*
-                   (parse-command-flags (get-output-stream-string output-stream))))
+          (unionf *cc-flags*
+                   (parse-command-flags (get-output-stream-string output-stream)) :test #'string=))
       (error (e)
         (let ((message (format nil "~a~&~%~a~&"
                                e (get-output-stream-string output-stream))))
@@ -828,7 +828,8 @@ string."
     (write-line string out)))
 
 (define-wrapper-syntax flag (&rest flags)
-  (appendf *cc-flags* (parse-command-flags-list flags)))
+  (unionf *cc-flags* (parse-command-flags-list flags)
+          :test #'string=))
 
 (define-wrapper-syntax proclaim (&rest proclamations)
   (push `(proclaim ,@proclamations) *lisp-forms*))
