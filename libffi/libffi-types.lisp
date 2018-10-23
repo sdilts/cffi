@@ -66,8 +66,6 @@
 (cenum abi
        ((:first-abi "FFI_FIRST_ABI"))
        ((:unix-64 "FFI_UNIX64"))
-       ((:win64 "FFI_WIN64"))
-       ((:efi64 "FFI_EFI64"))
        ((:last-abi "FFI_LAST_ABI"))
        ((:default-abi "FFI_DEFAULT_ABI")))
 
