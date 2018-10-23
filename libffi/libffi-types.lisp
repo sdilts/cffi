@@ -53,26 +53,49 @@
  ((:bad-typedef "FFI_BAD_TYPEDEF"))
  ((:bad-abi "FFI_BAD_ABI")))
 
-#+freebsd
-(cenum abi
- ((:default-abi "FFI_DEFAULT_ABI")))
-
+;; #if defined(X86_WIN64)
 #+(and windows x86-64)
 (cenum abi
- ((:default-abi "FFI_DEFAULT_ABI"))
- ((:win64 "FFI_WIN64")))
+       ((:first-abi "FFI_FIRST_ABI"))
+       ((:win64 "FFI_WIN64"))
+       ((:last-abi "FFI_LAST_ABI"))
+       ((:default-abi "FFI_DEFAULT_ABI")))
 
-#+(and windows (not x86-64))
+;; #elif defined(X86_64) || (defined (__x86_64__) && defined (X86_DARWIN))
+#+(and x86-64 (not windows))
 (cenum abi
- ((:default-abi "FFI_DEFAULT_ABI"))
- ((:sysv "FFI_SYSV"))
- ((:stdcall "FFI_STDCALL")))
+       ((:first-abi "FFI_FIRST_ABI"))
+       ((:unix-64 "FFI_UNIX64"))
+       ((:last-abi "FFI_LAST_ABI"))
+       ((:default-abi "FFI_DEFAULT_ABI")))
 
-#-(or freebsd windows)
+;; #elif defined(X86_WIN32)
+#+windows
 (cenum abi
- ((:default-abi "FFI_DEFAULT_ABI"))
- ((:sysv "FFI_SYSV"))
- ((:unix64 "FFI_UNIX64")))
+       ((:first-abi  "FFI_FIRST_ABI"))
+       ((:sysv "FFI_SYSV"))
+       ((:stdcall "FFI_STDCALL"))
+       ((:thiscall "FFI_THISCALL"))
+       ((:fastcall "FFI_FASTCALL"))
+       ((:ms-cdecl "FFI_MS_CDECL"))
+       ((:pascal "FFI_PASCAL"))
+       ((:register "FFI_REGISTER"))
+       ((:last-abi "FFI_LAST_ABI"))
+       ((:default-abi "FFI_DEFAULT_ABI")))
+
+;; #else
+#-(or windows x86-64)
+(cenum abi
+       ((:first-abi "FFI_FIRST_ABI"))
+       ((:sysv "FFI_SYSV"))
+       ((:thiscall "FFI_THISCALL"))
+       ((:fastcall "FFI_FASTCALL"))
+       ((:stdcall "FFI_STDCALL"))
+       ((:pascal "FFI_PASCAL"))
+       ((:register "FFI_REGISTER"))
+       ((:ms-cdecl "FFI_MS_CDECL"))
+       ((:last-abi "FFI_LAST_ABI"))
+       ((:default-abi "FFI_DEFAULT_ABI")))
 
 (ctype ffi-abi "ffi_abi")
 
